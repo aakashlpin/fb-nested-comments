@@ -1,13 +1,13 @@
 var inputData = [{
-  pageId: '18807449704',
-  postId: '10152662273199705'
+  pageId: '1448480562093405',
+  postId: '1448481268760001'
 }, {
-  pageId: '18807449704',
-  postId: '10152669896689705'
+  pageId: '1448480562093405',
+  postId: '1448483272093134'
 }];
 
 function frameRequest(req) {
-  return req + '?access_token=903855596296764|dhg-U21_XWTExPLl00bhNuE3HDw';
+  return req + '?access_token=' + window.userAccessToken;
 }
 
 window.fbAsyncInit = function() {
@@ -17,8 +17,33 @@ window.fbAsyncInit = function() {
     version    : 'v2.0'
   });
 
-  processAllPages(inputData);
+  FB.getLoginStatus(function(response) {
+    if (response.status === 'connected') {
+      console.log('Logged in.');
+      initApp();
+      // replyToComment();
+    }
+    else {
+      $('#fbLogin').removeClass('hide');
+    }
+  });
 };
+
+function replyToComment() {
+  FB.api(
+    "/1448481268760001_1448481912093270/comments?access_token=" + window.userAccessToken,
+    "POST",
+    {
+      "message": "I love starbucks for that!"
+    },
+    function(response) {
+      if (response && !response.error) {
+        var commentId = response.id;
+        //Do whatever you wish to with this comment
+      }
+    }
+  );
+}
 
 var processedData = {};
 
@@ -100,3 +125,24 @@ function processPost(post, eachCb) {
       }
   );
 }
+
+function getAccessTokenForUser() {
+  window.userAccessToken = FB.getAuthResponse()['accessToken'];
+}
+
+function initApp() {
+  getAccessTokenForUser();
+  processAllPages(inputData);
+}
+
+$(function() {
+  $('#fbLogin').on('click', function() {
+    FB.login(function(response) {
+       if (response.authResponse) {
+        initApp();
+       } else {
+        console.log('User cancelled login or did not fully authorize.');
+       }
+     }, {scope: 'publish_actions'});
+  });
+});
