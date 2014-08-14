@@ -1,85 +1,84 @@
 (function($, window) {
-	var inputData;
+	var inputData, userAccessToken, userId, _this;
 
 	function frameRequest(req) {
-	  return req + '?access_token=' + window.userAccessToken;
+	  return req + '?access_token=' + userAccessToken;
 	}
 
 	window.fbAsyncInit = function() {
-		console.log('fbAsyncInit');
-	  FB.init({
-	    appId      : inputData.appId,
-	    xfbml      : true,
-	    version    : 'v2.0'
-	  });
+		FB.init({
+			appId      : inputData.appId,
+			xfbml      : true,
+			version    : 'v2.0'
+		});
 
-	  FB.getLoginStatus(function(response) {
-	    if (response.status === 'connected') {
-	      console.log('Logged in.');
-	      initApp();
-	      // replyToComment();
-	    }
-	    else {
-	      $('#fbLogin').removeClass('hide');
-	    }
-	  });
+		FB.getLoginStatus(function(response) {
+			if (response.status === 'connected') {
+			console.log('Logged in.');
+			initApp();
+			// replyToComment();
+			} else {
+				$('#fbLogin').removeClass('hide');
+			}
+		});
 	};
 
 	function replyToComment() {
-	  FB.api(
-	    "/1448481268760001_1448481912093270/comments?access_token=" + window.userAccessToken,
-	    "POST",
-	    {
-	      "message": "I love starbucks for that!"
-	    },
-	    function(response) {
-	      if (response && !response.error) {
-	        var commentId = response.id;
-	        //Do whatever you wish to with this comment
-	      }
-	    }
-	  );
+		FB.api(
+			"/1448481268760001_1448481912093270/comments?access_token=" + userAccessToken,
+			"POST",
+			{
+				"message": "I love starbucks for that!"
+			},
+			function(response) {
+				if (response && !response.error) {
+					var commentId = response.id;
+					//Do whatever you wish to with this comment
+				}
+			}
+		);
 	}
 
 	var processedData = {};
 
 	function processAllPages(pages) {
-	  async.each(pages, processPage, function(err) {
-	    if (err) {
-	      console.log(err);
-	      return;
-	    }
-	    //on successfully processing all pages, start processing all posts
-	    processAllPosts(inputData.items);
-	  });
+		async.each(pages, processPage, function(err) {
+			if (err) {
+				console.log(err);
+				return;
+			}
+			//on successfully processing all pages, start processing all posts
+			processAllPosts(inputData.items);
+		});
 	}
 
 	function processPage(page, eachCb) {
-	  FB.api(
-	    frameRequest(page.pageId),
-	    function(response) {
-	      if (!response || response.error) {
-	        eachCb(response.error);
-	        return;
-	      }
-	      processedData[page.pageId] = {
-	        page_name: response.name,
-	        page_link: response.link
-	      };
-
-	      eachCb(null);
-	    }
-	  )
+		FB.api(
+			frameRequest(page.pageId),
+			function(response) {
+				if (!response || response.error) {
+					eachCb(response.error);
+					return;
+				}
+				processedData[page.pageId] = {
+					page_name: response.name,
+					page_link: response.link
+				};
+				eachCb(null);
+			}
+		);
 	}
 
 	function processAllPosts(posts) {
-	  async.each(posts, processPost, function(err) {
-	    if (err) {
-	      console.log(err);
-	    }
+		async.each(posts, processPost, function(err) {
+			if (err) {
+				console.log(err);
+			}
 
-	    console.log(processedData);
-	  });
+			console.log(processedData);
+			//this the place where we have all the data we need to create DOMs
+			initDOM(_.values(processedData));
+		});
 	}
 
 	function processPost(post, eachCb) {
@@ -87,8 +86,8 @@
 	      frameRequest(post.postId),
 	      function (response) {
 	        if (!response || response.error) {
-	          eachCb(response.error);
-	          return;
+	            eachCb(response.error);
+	            return;
 	        }
 
 	        //for each comment, get the commentId, make another OG call to get nested comments recursively until data returned is empty array
@@ -109,8 +108,8 @@
 	            },
 	            function(err) {
 	              if (err) {
-	                eachCb(err);
-	                return;
+	                  eachCb(err);
+	                  return;
 	              }
 
 	              processedData[post.pageId]["posts"] = processedData[post.pageId]["posts"] || [];
@@ -122,8 +121,98 @@
 	  );
 	}
 
+	function initDOM(items) {
+		var domHead = '<div class="greybg">';
+		var domClose = '</div>';
+		var domBody = '';
+		_.each(items, function(item) {
+			domBody +=
+				'<ul class="comments">' +
+					'<li class="white-bg">' +
+						'<strong>'+ item.page_name +'</strong>' +
+					'</li>'
+			;
+
+			var pagePost = item.posts[0];
+
+			_.each(pagePost.comments.data, function(comment) {
+				domBody +=
+	                '<li>' +
+	                    '<div class="rowbox">'+
+	                        '<div class="msgbox">'+
+	                            '<a class="prof-img">'+
+	                                '<img src="https://graph.facebook.com/'+ comment.from.id +'/picture" width="32" height="32">' +
+	                            '</a>'+
+	                            '<div class="side-content">'+
+	                                '<div>'+
+	                                    '<a target="_blank" href="https://facebook.com/'+ comment.from.id +'" class="prof-link"><strong>'+ comment.from.name +'</strong></a>'+
+	                                    '<span>'+ comment.message +'</span>'+
+	                                '</div>'+
+	                                '<div>'+
+	                                    '<a data-action="reply-comment" href="#">Reply</a>'+
+	                                '</div>'+
+	                            '</div>'+
+	                        '</div>'+
+	                    '</div>'+
+	                '</li>'
+	            ;
+
+	            if (comment.comments.length) {
+	            	domBody +=
+	            		'<ul class="replies">'
+	            	;
+	            }
+
+	            _.each(comment.comments, function(nestedComment) {
+                    domBody +=
+                        '<li>' +
+                            '<div class="rowbox">' +
+                                '<div class="msgbox">'+
+                                    '<a class="prof-img">'+
+                                        '<img src="https://graph.facebook.com/' + nestedComment.from.id +'/picture" width="22" height="22">'+
+                                    '</a>'+
+                                    '<div class="side-content">'+
+                                        '<div>'+
+                                            '<a href="#" class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
+                                            '<span>'+ nestedComment.message +'</span>'+
+                                        '</div>'+
+                                    '</div>'+
+                                '</div>'+
+                                '<div class="reply-sec">'+
+	                                '<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
+	                                '<div class="reply-input">'+
+	                                    '<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
+	                                '</div>'+
+	                            '</div>'+
+                            '</div>'+
+                        '</li>'
+                    ;
+	            });
+
+	            if (comment.comments.length) {
+					domBody +=
+	                        // '<li>'+
+	                        //     '<a href="#" class="clearfix block">'+
+	                        //         '<img class="reply-icon pull-left">'+
+	                        //         '<span class="pull-left">4 Replies</span>'+
+	                        //     '</a>'+
+	                        // '</li>'+
+	                    '</ul>'
+	                ;
+	            }
+			});
+
+			domBody += '</ul>';
+		});
+
+		var dom = domHead + domBody + domClose;
+		$(_this).html(dom);
+	}
+
 	function getAccessTokenForUser() {
-	  window.userAccessToken = FB.getAuthResponse()['accessToken'];
+		var authResponse = FB.getAuthResponse();
+    	userAccessToken = authResponse['accessToken'];
+    	userId = authResponse['userID'];
 	}
 
 	function initApp() {
@@ -132,7 +221,9 @@
 	}
 
 	$.fn.fbNestedComments = function(pluginInputData) {
+		//assign the local variable with data sent from user
 		inputData = pluginInputData;
+		_this = this;
 
 		(function(d, s, id){
 			var js, fjs = d.getElementsByTagName(s)[0];
