@@ -135,9 +135,10 @@
 
 			var pagePost = item.posts[0];
 
-			_.each(pagePost.comments.data, function(comment) {
+			_.each(pagePost.comments.data, function(comment, index) {
+				var hideClass = index > 2 ? 'hide' : '';
 				domBody +=
-	                '<li>' +
+	                '<li class="'+ hideClass +'">' +
 	                    '<div class="rowbox">'+
 	                        '<div class="msgbox">'+
 	                            '<a class="prof-img">'+
@@ -149,7 +150,7 @@
 	                                    '<span>'+ comment.message +'</span>'+
 	                                '</div>'+
 	                                '<div>'+
-	                                    '<a data-action="reply-comment" href="#">Reply</a>'+
+	                                    '<a data-action="do-reply">Reply</a>'+
 	                                '</div>'+
 	                            '</div>'+
 	                        '</div>'+
@@ -165,7 +166,7 @@
 
 	            _.each(comment.comments, function(nestedComment) {
                     domBody +=
-                        '<li>' +
+                        '<li class="nestedComment hide">' +
                             '<div class="rowbox">' +
                                 '<div class="msgbox">'+
                                     '<a class="prof-img">'+
@@ -173,12 +174,12 @@
                                     '</a>'+
                                     '<div class="side-content">'+
                                         '<div>'+
-                                            '<a href="#" class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
+                                            '<a class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
                                             '<span>'+ nestedComment.message +'</span>'+
                                         '</div>'+
                                     '</div>'+
                                 '</div>'+
-                                '<div class="reply-sec">'+
+                                '<div class="reply-sec hide">'+
 	                                '<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
 	                                '<div class="reply-input">'+
 	                                    '<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
@@ -191,12 +192,12 @@
 
 	            if (comment.comments.length) {
 					domBody +=
-	                        // '<li>'+
-	                        //     '<a href="#" class="clearfix block">'+
-	                        //         '<img class="reply-icon pull-left">'+
-	                        //         '<span class="pull-left">4 Replies</span>'+
-	                        //     '</a>'+
-	                        // '</li>'+
+	                        '<li>'+
+	                            '<a data-action="show-replies" class="clearfix block">'+
+	                                '<img class="reply-icon pull-left">'+
+	                                '<span class="pull-left">'+comment.comments.length +' Replies</span>'+
+	                            '</a>'+
+	                        '</li>'+
 	                    '</ul>'
 	                ;
 	            }
@@ -207,6 +208,11 @@
 
 		var dom = domHead + domBody + domClose;
 		$(_this).html(dom);
+
+		$(_this).find('[data-action="show-replies"]').on('click', function() {
+			$(this).closest('li').hide();
+			$(this).closest('.replies').find('.nestedComment').removeClass('hide');
+		})
 	}
 
 	function getAccessTokenForUser() {

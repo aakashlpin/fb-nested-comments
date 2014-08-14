@@ -17,6 +17,10 @@ body {
     padding-bottom: 20px;
 }
 
+a:hover {
+    cursor: pointer;
+}
+
 /* Everything but the jumbotron gets side spacing for mobile first views */
 .header,
 .marketing,
@@ -113,6 +117,7 @@ body {
     word-wrap: break-word;
 }
 .comments li:last-child {
+    border-top: 0;
     border-bottom: 0px;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
@@ -184,7 +189,7 @@ body {
     resize: none;
 }
 .replies {
-    margin: 6px 0 2px 42px;
+    margin: 0 0 2px 42px;
     background:#f0f1f3;
     list-style: none;
     padding: 0px;
