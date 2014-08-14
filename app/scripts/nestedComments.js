@@ -160,7 +160,7 @@
 
 	            if (comment.comments.length) {
 	            	domBody +=
-	            		'<ul class="replies">'
+	            		'<ul class="replies '+hideClass+'">'
 	            	;
 	            }
 
