@@ -91,3 +91,114 @@ body {
         border-bottom: 0;
     }
 }
+
+
+.greybg {
+    background: #e9eaed;
+    padding: 0 10px;
+    overflow: hidden;
+}
+.comments {
+    background: #f6f7f8;
+    border: 1px solid #dfe0e4;
+    list-style: none;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    padding: 0px;
+}
+.comments li {
+    padding: 6px 10px;
+    border-top: 1px solid #fff;
+    border-bottom: 1px solid #d0d6dc;
+    word-wrap: break-word;
+}
+.comments li:last-child {
+    border-bottom: 0px;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+.comments li.white-bg {
+    background: #fff;
+}
+.comments li a {
+    color: #3b5998;
+    text-decoration: none;
+}
+.comments li a:hover {
+    text-decoration: underline;
+}
+.comments li a i {
+    margin-right: 10px;
+    text-decoration: none;
+}
+.comments li a:hover i {
+    text-decoration: none;
+}
+.rowbox {
+    clear: both;
+    display: block;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+.msgbox {
+    overflow: hidden;
+}
+.prof-img {
+    float: left;
+    margin: 2px 10px 0 0;
+}
+.side-content {
+    margin: 0;
+    padding: 0;
+    line-height: 16px;
+}
+.side-content .prof-link {
+    margin-right: 2px;
+}
+.reply-sec {
+    padding-left: 42px;
+    margin-top: 4px;
+}
+.reply-input {
+    overflow: hidden;
+    height: auto;
+}
+.reply-sec .greyline {
+    width: 2px;
+    background: #ccc;
+    min-height: 22px;
+    display: block;
+    position: absolute;
+    margin-left: -10px;
+    margin-top: 2px;
+}
+
+.reply-input textarea {
+    border: 1px solid #dadce0;
+    max-height: 14px;
+    padding: 4px 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    width: 96%;
+    resize: none;
+}
+.replies {
+    margin: 6px 0 2px 42px;
+    background:#f0f1f3;
+    list-style: none;
+    padding: 0px;
+}
+.replies li:first-child {
+    border-top: 0px;
+}
+.replies .reply-sec {
+    padding-left: 0px;
+}
+.replies .msgbox {
+    border-bottom: 1px solid #d0d6dc;
+    padding: 4px 0;
+}
+.replies .msgbox:nth-last-child(2) {
+    border-bottom: 0px;
+}
