@@ -1,5 +1,6 @@
 (function($, window) {
 	var inputData, userAccessToken, userId, _this;
+	var initialCommentsCount = 4;
 
 	function frameRequest(req) {
 	  return req + '?access_token=' + userAccessToken;
@@ -134,11 +135,13 @@
 			;
 
 			var pagePost = item.posts[0];
+			var hasHiddenComments = pagePost.comments.data.length > initialCommentsCount;
+			var hiddenCommentsCount = hasHiddenComments ? pagePost.comments.data.length - initialCommentsCount : 0;
 
 			_.each(pagePost.comments.data, function(comment, index) {
-				var hideClass = index > 2 ? 'hide' : '';
+				var visibilityClass = index >= initialCommentsCount ? 'hide' : '';
 				domBody +=
-	                '<li class="'+ hideClass +'">' +
+	                '<li class="'+ visibilityClass +'">' +
 	                    '<div class="rowbox">'+
 	                        '<div class="msgbox">'+
 	                            '<a class="prof-img">'+
@@ -147,9 +150,9 @@
 	                            '<div class="side-content">'+
 	                                '<div>'+
 	                                    '<a target="_blank" href="https://facebook.com/'+ comment.from.id +'" class="prof-link"><strong>'+ comment.from.name +'</strong></a>'+
-	                                    '<span>'+ comment.message +'</span>'+
+	                                    '<span class="fb-comment-msg">'+ comment.message +'</span>'+
 	                                '</div>'+
-	                                '<div>'+
+	                                '<div class="fb-reply-btn-container">'+
 	                                    '<a data-action="do-reply">Reply</a>'+
 	                                '</div>'+
 	                            '</div>'+
@@ -160,7 +163,7 @@
 
 	            if (comment.comments.length) {
 	            	domBody +=
-	            		'<ul class="replies '+hideClass+'">'
+	            		'<ul class="replies '+ visibilityClass +'">'
 	            	;
 	            }
 
@@ -175,7 +178,7 @@
                                     '<div class="side-content">'+
                                         '<div>'+
                                             '<a class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
-                                            '<span>'+ nestedComment.message +'</span>'+
+                                            '<span class="fb-comment-msg">'+ nestedComment.message +'</span>'+
                                         '</div>'+
                                     '</div>'+
                                 '</div>'+
@@ -203,6 +206,17 @@
 	            }
 			});
 
+			if (hasHiddenComments) {
+				domBody +=
+                    '<li class="white-bg">'+
+                        '<a data-action="show-comments" class="clearfix block">'+
+                            '<img class="reply-icon pull-left">'+
+                            '<span class="pull-left">View '+ hiddenCommentsCount +' more comments</span>'+
+                        '</a>'+
+                    '</li>'
+                ;
+			}
+
 			domBody += '</ul>';
 		});
 
@@ -212,7 +226,12 @@
 		$(_this).find('[data-action="show-replies"]').on('click', function() {
 			$(this).closest('li').hide();
 			$(this).closest('.replies').find('.nestedComment').removeClass('hide');
-		})
+		});
+
+		$(_this).find('[data-action="show-comments"]').on('click', function() {
+			$(this).closest('li').hide();
+			$(this).closest('.comments').find('>li.hide').removeClass('hide');
+		});
 	}
 
 	function getAccessTokenForUser() {
