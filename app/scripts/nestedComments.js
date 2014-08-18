@@ -161,11 +161,12 @@
 	                '</li>'
 	            ;
 
-	            if (comment.comments.length) {
+	            // if (comment.comments.length) {
 	            	domBody +=
-	            		'<ul class="replies '+ visibilityClass +'">'
+	            		'<li class="fb-replies-container">'+
+		            		'<ul class="replies '+ visibilityClass +'">'
 	            	;
-	            }
+	            // }
 
 	            _.each(comment.comments, function(nestedComment) {
                     domBody +=
@@ -182,12 +183,6 @@
                                         '</div>'+
                                     '</div>'+
                                 '</div>'+
-                                '<div class="reply-sec hide">'+
-	                                '<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
-	                                '<div class="reply-input">'+
-	                                    '<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
-	                                '</div>'+
-	                            '</div>'+
                             '</div>'+
                         '</li>'
                     ;
@@ -195,15 +190,27 @@
 
 	            if (comment.comments.length) {
 					domBody +=
-	                        '<li>'+
-	                            '<a data-action="show-replies" class="clearfix block">'+
-	                                '<img class="reply-icon pull-left">'+
-	                                '<span class="pull-left">'+comment.comments.length +' Replies</span>'+
-	                            '</a>'+
-	                        '</li>'+
-	                    '</ul>'
+                        '<li class="fb-reply-length-container">'+
+                            '<a data-action="show-replies" class="clearfix block">'+
+                                '<img class="reply-icon pull-left">'+
+                                '<span class="pull-left">'+comment.comments.length +' Replies</span>'+
+                            '</a>'+
+                        '</li>'
 	                ;
 	            }
+
+	            domBody +=
+	            		'<li class="fb-reply-action-container hide">'+
+                            '<div class="reply-sec">'+
+                                '<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
+                                '<div class="reply-input">'+
+                                    '<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
+                                '</div>'+
+                            '</div>'+
+	            		'</li>'+
+	                    '</ul>'+
+                    '</li>'
+                ;
 			});
 
 			if (hasHiddenComments) {
@@ -232,6 +239,12 @@
 			$(this).closest('li').hide();
 			$(this).closest('.comments').find('>li.hide').removeClass('hide');
 		});
+
+		$(_this).find('[data-action="show-comments"]').on('click', function() {
+			$(this).closest('li').hide();
+			$(this).closest('.comments').find('>li.hide').removeClass('hide');
+		});
+
 	}
 
 	function getAccessTokenForUser() {
