@@ -84,41 +84,41 @@
 
 	function processPost(post, eachCb) {
 	  FB.api(
-	      frameRequest(post.postId),
-	      function (response) {
-	        if (!response || response.error) {
-	            eachCb(response.error);
-	            return;
-	        }
+		  frameRequest(post.postId),
+		  function (response) {
+			if (!response || response.error) {
+				eachCb(response.error);
+				return;
+			}
 
-	        //for each comment, get the commentId, make another OG call to get nested comments recursively until data returned is empty array
-	        async.each(
-	            response.comments.data,
-	            function(comment, nestedEachCb) {
-	                FB.api(
-	                    frameRequest(comment.id + '/comments'),
-	                    function(response) {
-	                        if (!response || response.error) {
-	                          nestedEachCb(response.error);
-	                          return;
-	                        }
-	                        comment.comments = response.data;
-	                        nestedEachCb(null);
-	                    }
-	                );
-	            },
-	            function(err) {
-	              if (err) {
-	                  eachCb(err);
-	                  return;
-	              }
+			//for each comment, get the commentId, make another OG call to get nested comments recursively until data returned is empty array
+			async.each(
+				response.comments.data,
+				function(comment, nestedEachCb) {
+					FB.api(
+						frameRequest(comment.id + '/comments'),
+						function(response) {
+							if (!response || response.error) {
+							  nestedEachCb(response.error);
+							  return;
+							}
+							comment.comments = response.data;
+							nestedEachCb(null);
+						}
+					);
+				},
+				function(err) {
+				  if (err) {
+					  eachCb(err);
+					  return;
+				  }
 
-	              processedData[post.pageId]["posts"] = processedData[post.pageId]["posts"] || [];
-	              processedData[post.pageId]["posts"].push(response);
-	              eachCb(null);
-	            }
-	        );
-	      }
+				  processedData[post.pageId]["posts"] = processedData[post.pageId]["posts"] || [];
+				  processedData[post.pageId]["posts"].push(response);
+				  eachCb(null);
+				}
+			);
+		  }
 	  );
 	}
 
@@ -141,87 +141,85 @@
 			_.each(pagePost.comments.data, function(comment, index) {
 				var visibilityClass = index >= initialCommentsCount ? 'hide' : '';
 				domBody +=
-	                '<li class="'+ visibilityClass +'">' +
-	                    '<div class="rowbox">'+
-	                        '<div class="msgbox">'+
-	                            '<a class="prof-img">'+
-	                                '<img src="https://graph.facebook.com/'+ comment.from.id +'/picture" width="32" height="32">' +
-	                            '</a>'+
-	                            '<div class="side-content">'+
-	                                '<div>'+
-	                                    '<a target="_blank" href="https://facebook.com/'+ comment.from.id +'" class="prof-link"><strong>'+ comment.from.name +'</strong></a>'+
-	                                    '<span class="fb-comment-msg">'+ comment.message +'</span>'+
-	                                '</div>'+
-	                                '<div class="fb-reply-btn-container">'+
-	                                    '<a data-action="do-reply">Reply</a>'+
-	                                '</div>'+
-	                            '</div>'+
-	                        '</div>'+
-	                    '</div>'+
-	                '</li>'
-	            ;
+					'<li class="'+ visibilityClass +'">' +
+						'<div class="rowbox">'+
+							'<div class="msgbox">'+
+								'<a class="prof-img">'+
+									'<img src="https://graph.facebook.com/'+ comment.from.id +'/picture" width="32" height="32">' +
+								'</a>'+
+								'<div class="side-content">'+
+									'<div>'+
+										'<a target="_blank" href="https://facebook.com/'+ comment.from.id +'" class="prof-link"><strong>'+ comment.from.name +'</strong></a>'+
+										'<span class="fb-comment-msg">'+ comment.message +'</span>'+
+									'</div>'+
+									'<div class="fb-reply-btn-container">'+
+										'<a data-action="do-reply">Reply</a>'+
+									'</div>'+
+								'</div>'+
+							'</div>'+
+						'</div>'+
+					'</li>'
+				;
 
-	            // if (comment.comments.length) {
-	            	domBody +=
-	            		'<li class="fb-replies-container">'+
-		            		'<ul class="replies '+ visibilityClass +'">'
-	            	;
-	            // }
+				domBody +=
+					'<li class="fb-replies-container">'+
+						'<ul class="replies '+ visibilityClass +'">'
+				;
 
-	            _.each(comment.comments, function(nestedComment) {
-                    domBody +=
-                        '<li class="nestedComment hide">' +
-                            '<div class="rowbox">' +
-                                '<div class="msgbox">'+
-                                    '<a class="prof-img">'+
-                                        '<img src="https://graph.facebook.com/' + nestedComment.from.id +'/picture" width="22" height="22">'+
-                                    '</a>'+
-                                    '<div class="side-content">'+
-                                        '<div>'+
-                                            '<a class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
-                                            '<span class="fb-comment-msg">'+ nestedComment.message +'</span>'+
-                                        '</div>'+
-                                    '</div>'+
-                                '</div>'+
-                            '</div>'+
-                        '</li>'
-                    ;
-	            });
-
-	            if (comment.comments.length) {
+				_.each(comment.comments, function(nestedComment) {
 					domBody +=
-                        '<li class="fb-reply-length-container">'+
-                            '<a data-action="show-replies" class="clearfix block">'+
-                                '<img class="reply-icon pull-left">'+
-                                '<span class="pull-left">'+comment.comments.length +' Replies</span>'+
-                            '</a>'+
-                        '</li>'
-	                ;
-	            }
+						'<li class="nestedComment hide">' +
+							'<div class="rowbox">' +
+								'<div class="msgbox">'+
+									'<a class="prof-img">'+
+										'<img src="https://graph.facebook.com/' + nestedComment.from.id +'/picture" width="22" height="22">'+
+									'</a>'+
+									'<div class="side-content">'+
+										'<div>'+
+											'<a class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
+											'<span class="fb-comment-msg">'+ nestedComment.message +'</span>'+
+										'</div>'+
+									'</div>'+
+								'</div>'+
+							'</div>'+
+						'</li>'
+					;
+				});
 
-	            domBody +=
-	            		'<li class="fb-reply-action-container hide">'+
-                            '<div class="reply-sec">'+
-                                '<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
-                                '<div class="reply-input">'+
-                                    '<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
-                                '</div>'+
-                            '</div>'+
-	            		'</li>'+
-	                    '</ul>'+
-                    '</li>'
-                ;
+				if (comment.comments.length) {
+					domBody +=
+						'<li class="fb-reply-length-container">'+
+							'<a data-action="show-replies" class="clearfix block">'+
+								'<img class="reply-icon pull-left">'+
+								'<span class="pull-left">'+comment.comments.length +' Replies</span>'+
+							'</a>'+
+						'</li>'
+					;
+				}
+
+				domBody +=
+						'<li class="fb-reply-action-container hide">'+
+							'<div class="reply-sec">'+
+								'<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
+								'<div class="reply-input">'+
+									'<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
+								'</div>'+
+							'</div>'+
+						'</li>'+
+						'</ul>'+
+					'</li>'
+				;
 			});
 
 			if (hasHiddenComments) {
 				domBody +=
-                    '<li class="white-bg">'+
-                        '<a data-action="show-comments" class="clearfix block">'+
-                            '<img class="reply-icon pull-left">'+
-                            '<span class="pull-left">View '+ hiddenCommentsCount +' more comments</span>'+
-                        '</a>'+
-                    '</li>'
-                ;
+					'<li class="white-bg">'+
+						'<a data-action="show-comments" class="clearfix block">'+
+							'<img class="reply-icon pull-left">'+
+							'<span class="pull-left">View '+ hiddenCommentsCount +' more comments</span>'+
+						'</a>'+
+					'</li>'
+				;
 			}
 
 			domBody += '</ul>';
@@ -245,12 +243,23 @@
 			$(this).closest('.comments').find('>li.hide').removeClass('hide');
 		});
 
+		$(_this).find('[data-action="do-reply"]').on('click', function() {
+			$(this).closest('.fb-reply-btn-container').hide();
+			$(this).closest('li').next('li.fb-replies-container')
+				.find('.replies > li.fb-reply-length-container').hide()
+				.end()
+				.find('.replies > li.hide').removeClass('hide')
+				.end()
+				.find('.replies > li.fb-reply-action-container textarea').focus()
+				;
+		});
+
 	}
 
 	function getAccessTokenForUser() {
 		var authResponse = FB.getAuthResponse();
-    	userAccessToken = authResponse['accessToken'];
-    	userId = authResponse['userID'];
+		userAccessToken = authResponse['accessToken'];
+		userId = authResponse['userID'];
 	}
 
 	function initApp() {
