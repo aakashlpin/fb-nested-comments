@@ -1,41 +1,65 @@
 (function($, window) {
-	var inputData, userAccessToken, userId, _this;
+	var inputData, userAccessToken, userId, userData, _this;
 	var initialCommentsCount = 4;
 
 	function frameRequest(req) {
-	  return req + '?access_token=' + userAccessToken;
+	  return req;
+	}
+
+	function getLoginStatus(callback) {
+		FB.getLoginStatus(function(response) {
+			if(response.authResponse) {
+				FB.api('/me/permissions', function(perms_response) {
+					// if publish_actions access already exists, we're good to go
+					if (_.find(perms_response.data, function(permissionItem) {
+						return permissionItem.permission === "publish_actions";
+					})) {
+						console.log('permissions are already granted.');
+						callback(true);
+					} else {
+						// publish_actions does not exist, so show an auth dialog
+						// get publish_actions permissions
+						console.log('requesting permission...');
+						callback(false);
+					}
+				});
+				// user is not connected to the app, so show an auth dialog
+			} else {
+				// get publish_actions permissions
+				console.log('requesting permission...');
+				callback(false);
+			}
+		});
 	}
 
 	window.fbAsyncInit = function() {
 		FB.init({
-			appId      : inputData.appId,
-			xfbml      : true,
-			version    : 'v2.0'
+			appId		: inputData.appId,
+			xfbml		: true,
+			version		: 'v2.0'
 		});
-
-		FB.getLoginStatus(function(response) {
-			if (response.status === 'connected') {
-			console.log('Logged in.');
-			initApp();
-			// replyToComment();
+		getLoginStatus(function(isGoodToGo) {
+			if (isGoodToGo) {
+				initApp();
 			} else {
-				$('#fbLogin').removeClass('hide');
+				$('#fbLoginContainer').removeClass('hide');
 			}
 		});
 	};
 
-	function replyToComment() {
+	function replyToComment(commentOnId, message, callback) {
+		var apiAddress = "/"+ commentOnId +"/comments";
 		FB.api(
-			"/1448481268760001_1448481912093270/comments?access_token=" + userAccessToken,
+			apiAddress,
 			"POST",
 			{
-				"message": "I love starbucks for that!"
+				"message": message
 			},
 			function(response) {
 				if (response && !response.error) {
-					var commentId = response.id;
-					//Do whatever you wish to with this comment
+					callback(null, response.id);
 				}
+				callback(response.error || response);
 			}
 		);
 	}
@@ -122,6 +146,24 @@
 	  );
 	}
 
+	function getNestedCommentDOM(nestedComment, classes) {
+		return '<li class="nestedComment '+ classes +'">' +
+					'<div class="rowbox">' +
+						'<div class="msgbox">'+
+							'<a class="prof-img">'+
+								'<img src="https://graph.facebook.com/' + nestedComment.from.id +'/picture" width="22" height="22">'+
+							'</a>'+
+							'<div class="side-content">'+
+								'<div>'+
+									'<a class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
+									'<span class="fb-comment-msg">'+ nestedComment.message +'</span>'+
+								'</div>'+
+							'</div>'+
+						'</div>'+
+					'</div>'+
+				'</li>';
+	}
+
 	function initDOM(items) {
 		var domHead = '<div class="greybg">';
 		var domClose = '</div>';
@@ -167,23 +209,7 @@
 				;
 
 				_.each(comment.comments, function(nestedComment) {
-					domBody +=
-						'<li class="nestedComment hide">' +
-							'<div class="rowbox">' +
-								'<div class="msgbox">'+
-									'<a class="prof-img">'+
-										'<img src="https://graph.facebook.com/' + nestedComment.from.id +'/picture" width="22" height="22">'+
-									'</a>'+
-									'<div class="side-content">'+
-										'<div>'+
-											'<a class="prof-link"><strong>'+ nestedComment.from.name +'</strong></a>'+
-											'<span class="fb-comment-msg">'+ nestedComment.message +'</span>'+
-										'</div>'+
-									'</div>'+
-								'</div>'+
-							'</div>'+
-						'</li>'
-					;
+					domBody += getNestedCommentDOM(nestedComment, 'hide');
 				});
 
 				if (comment.comments.length) {
@@ -202,7 +228,7 @@
 							'<div class="reply-sec">'+
 								'<a class="prof-img"> <img src="https://graph.facebook.com/' + userId +'/picture" width="22" height="22"> </a>'+
 								'<div class="reply-input">'+
-									'<textarea name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
+									'<textarea data-comment-id="'+comment.id+'" name="textarea" rows="1" placeholder="Write a reply..."></textarea>'+
 								'</div>'+
 							'</div>'+
 						'</li>'+
@@ -226,8 +252,14 @@
 		});
 
 		var dom = domHead + domBody + domClose;
+		//create the DOM
 		$(_this).html(dom);
 
+		//bind events in created DOM
+		bindAllEvents();
+	}
+
+	function bindAllEvents() {
 		$(_this).find('[data-action="show-replies"]').on('click', function() {
 			$(this).closest('li').hide();
 			$(this).closest('.replies').find('.nestedComment').removeClass('hide');
@@ -246,6 +278,8 @@
 		$(_this).find('[data-action="do-reply"]').on('click', function() {
 			$(this).closest('.fb-reply-btn-container').hide();
 			$(this).closest('li').next('li.fb-replies-container')
+				.find('.replies').removeClass('hide')
+				.end()
 				.find('.replies > li.fb-reply-length-container').hide()
 				.end()
 				.find('.replies > li.hide').removeClass('hide')
@@ -254,17 +288,51 @@
 				;
 		});
 
+		$(_this).find('li.fb-reply-action-container textarea').on('keypress', function(e) {
+			if (e.which == 13) {
+				//Enter keycode
+				e.preventDefault();
+				var textareaDOM = $(this);
+				var text = $.trim(textareaDOM.val());
+				var commentId = textareaDOM.data('comment-id');
+				replyToComment(commentId, text, function(err, responseCommentId) {
+					if (err) {
+						//TODO handle error
+					} else {
+						var commentDOM = getNestedCommentDOM({
+							from: {
+								name: userData.first_name + ' ' + userData.last_name,
+								id: userId
+							},
+							message: text
+						}, '');
+
+						textareaDOM.val('');
+
+						var lastNestedComment = textareaDOM.closest('.replies').find('>.nestedComment').last();
+						if (lastNestedComment.length) {
+							lastNestedComment.after(commentDOM);
+						} else {
+							textareaDOM.closest('.replies').prepend(commentDOM);
+						}
+					}
+				});
+			}
+		});
 	}
 
 	function getAccessTokenForUser() {
 		var authResponse = FB.getAuthResponse();
 		userAccessToken = authResponse['accessToken'];
+		FB.api('/me', function(meResponse) {
+			userData = meResponse;
+		});
 		userId = authResponse['userID'];
 	}
 
 	function initApp() {
-	  getAccessTokenForUser();
-	  processAllPages(inputData.items);
+		getAccessTokenForUser();
+		processAllPages(inputData.items);
 	}
 
 	$.fn.fbNestedComments = function(pluginInputData) {
@@ -287,7 +355,7 @@
 				} else {
 					console.log('User cancelled login or did not fully authorize.');
 				}
-			}, {scope: 'publish_actions'});
+			}, {scope: 'publish_actions', auth_type: 'rerequest'});
 		});
 
 		return this;
