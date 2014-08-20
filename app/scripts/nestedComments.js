@@ -139,31 +139,50 @@
 				return;
 			}
 
-			//for each comment, get the commentId, make another OG call to get nested comments recursively until data returned is empty array
-			async.each(
-				response.comments.data,
-				function(comment, nestedEachCb) {
-					FB.api(
-						frameRequest(comment.id + '/comments'),
-						function(response) {
-							if (!response || response.error) {
-							  nestedEachCb(response.error);
-							  return;
+			var nextPageCommentsLink = response.comments.paging.next;
+
+			async.whilst(
+				function() {
+					//truth test to perform before each execution of fn
+					return (typeof nextPageCommentsLink !== "undefined");
+				},
+				function(whilstCb) {
+					$.getJSON(nextPageCommentsLink, {}, function(nextComments) {
+						_.each(nextComments.data, function(nextComment) {
+							response.comments.data.push(nextComment);
+						});
+						nextPageCommentsLink = nextComments.paging.next;
+						whilstCb();
+					});
+				},
+				function() {
+					//for each comment, get the commentId, make another OG call to get nested comments recursively until data returned is empty array
+					async.each(
+						response.comments.data,
+						function(comment, nestedEachCb) {
+							FB.api(
+								frameRequest(comment.id + '/comments'),
+								function(response) {
+									if (!response || response.error) {
+									  nestedEachCb(response.error);
+									  return;
+									}
+									comment.comments = response.data;
+									nestedEachCb(null);
+								}
+							);
+						},
+						function(err) {
+							if (err) {
+								eachCb(err);
+								return;
 							}
-							comment.comments = response.data;
-							nestedEachCb(null);
+
+							processedData[post.pageId]["posts"] = processedData[post.pageId]["posts"] || [];
+							processedData[post.pageId]["posts"].push(response);
+							eachCb(null);
 						}
 					);
-				},
-				function(err) {
-				  if (err) {
-					  eachCb(err);
-					  return;
-				  }
-
-				  processedData[post.pageId]["posts"] = processedData[post.pageId]["posts"] || [];
-				  processedData[post.pageId]["posts"].push(response);
-				  eachCb(null);
 				}
 			);
 		  }
