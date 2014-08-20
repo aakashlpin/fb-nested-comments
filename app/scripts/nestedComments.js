@@ -1,6 +1,5 @@
 (function($, window) {
-	var inputData, userAccessToken, userId, userData, _this;
-	var initialCommentsCount = 4;
+	var inputData, userAccessToken, userId, userData, _this, initialCommentsCount;
 
 	function frameRequest(req) {
 	  return req;
@@ -373,6 +372,8 @@
 	$.fn.fbNestedComments = function(pluginInputData) {
 		//assign the local variable with data sent from user
 		inputData = pluginInputData;
+		//initialize the local global with initial comments to show
+		initialCommentsCount = inputData.initCommentLimit || 4;
 		_this = this;
 
 		if ($('#facebook-jssdk').length) {
