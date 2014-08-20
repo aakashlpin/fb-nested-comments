@@ -233,8 +233,12 @@
 						'<ul class="replies '+ visibilityClass +'">'
 				;
 
-				_.each(comment.comments, function(nestedComment) {
-					domBody += getNestedCommentDOM(nestedComment, 'hide');
+				_.each(comment.comments, function(nestedComment, commentIndex, commentList) {
+					var className = 'hide ';
+					if (commentList.length-1 === commentIndex) {
+						className += 'last';
+					}
+					domBody += getNestedCommentDOM(nestedComment, className);
 				});
 
 				if (comment.comments.length) {
@@ -334,13 +338,14 @@
 								id: userId
 							},
 							message: text
-						}, '');
+						}, ' last ');
 
 						textareaDOM.val('');
 						textareaDOM.removeAttr('disabled');
 
 						var lastNestedComment = textareaDOM.closest('.replies').find('>.nestedComment').last();
 						if (lastNestedComment.length) {
+							lastNestedComment.removeClass('last');
 							lastNestedComment.after(commentDOM);
 						} else {
 							textareaDOM.closest('.replies').prepend(commentDOM);
