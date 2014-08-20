@@ -32,7 +32,30 @@
 		});
 	}
 
-	window.fbAsyncInit = function() {
+	function drawLoginDOM() {
+        var dom =
+        	'<div class="text-center" id="fbLoginContainer">'+
+                '<button class="btn btn-primary" id="fbLogin">Connect with Facebook</button>'+
+            '</div>';
+
+		$(_this).html(dom);
+
+		bindLoginEvents();
+	}
+
+	function bindLoginEvents() {
+		$('#fbLogin').on('click', function() {
+			FB.login(function(response) {
+				if (response.authResponse) {
+					initApp();
+				} else {
+					console.log('User cancelled login or did not fully authorize.');
+				}
+			}, {scope: 'publish_actions', auth_type: 'rerequest'});
+		});
+	}
+
+	function fbInit() {
 		FB.init({
 			appId		: inputData.appId,
 			xfbml		: true,
@@ -42,10 +65,12 @@
 			if (isGoodToGo) {
 				initApp();
 			} else {
-				$('#fbLoginContainer').removeClass('hide');
+				drawLoginDOM();
 			}
 		});
-	};
+	}
+
+	window.fbAsyncInit = fbInit;
 
 	function replyToComment(commentOnId, message, callback) {
 		var apiAddress = "/"+ commentOnId +"/comments";
@@ -294,6 +319,10 @@
 				e.preventDefault();
 				var textareaDOM = $(this);
 				var text = $.trim(textareaDOM.val());
+				if (!text.length) {
+					return;
+				}
+				textareaDOM.attr('disabled', 'disabled');
 				var commentId = textareaDOM.data('comment-id');
 				replyToComment(commentId, text, function(err, responseCommentId) {
 					if (err) {
@@ -308,6 +337,7 @@
 						}, '');
 
 						textareaDOM.val('');
+						textareaDOM.removeAttr('disabled');
 
 						var lastNestedComment = textareaDOM.closest('.replies').find('>.nestedComment').last();
 						if (lastNestedComment.length) {
@@ -340,23 +370,21 @@
 		inputData = pluginInputData;
 		_this = this;
 
-		(function(d, s, id){
-			var js, fjs = d.getElementsByTagName(s)[0];
-			if (d.getElementById(id)) {return;}
-			js = d.createElement(s); js.id = id;
-			js.src = "//connect.facebook.net/en_US/sdk.js";
-			fjs.parentNode.insertBefore(js, fjs);
-		}(document, 'script', 'facebook-jssdk'));
+		if ($('#facebook-jssdk').length) {
+			//facebook js sdk is already in place
+			//directly init the app
+			fbInit();
 
-		$('#fbLogin').on('click', function() {
-			FB.login(function(response) {
-				if (response.authResponse) {
-					initApp();
-				} else {
-					console.log('User cancelled login or did not fully authorize.');
-				}
-			}, {scope: 'publish_actions', auth_type: 'rerequest'});
-		});
+		} else {
+			//load the sdk async and wait for fb to trigger the event
+			(function(d, s, id){
+				var js, fjs = d.getElementsByTagName(s)[0];
+				if (d.getElementById(id)) {return;}
+				js = d.createElement(s); js.id = id;
+				js.src = "//connect.facebook.net/en_US/sdk.js";
+				fjs.parentNode.insertBefore(js, fjs);
+			}(document, 'script', 'facebook-jssdk'));
+		}
 
 		return this;
 	};
