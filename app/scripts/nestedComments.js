@@ -245,7 +245,7 @@
 					domBody +=
 						'<li class="fb-reply-length-container">'+
 							'<a data-action="show-replies" class="clearfix block">'+
-								'<img class="reply-icon pull-left">'+
+								'<span class="reply-icon pull-left"></span>'+
 								'<span class="pull-left">'+comment.comments.length +' Replies</span>'+
 							'</a>'+
 						'</li>'
@@ -270,7 +270,7 @@
 				domBody +=
 					'<li class="white-bg">'+
 						'<a data-action="show-comments" class="clearfix block">'+
-							'<img class="reply-icon pull-left">'+
+							'<span class="reply-icon pull-left"></span>'+
 							'<span class="pull-left">View '+ hiddenCommentsCount +' more comments</span>'+
 						'</a>'+
 					'</li>'
