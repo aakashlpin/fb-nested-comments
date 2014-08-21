@@ -335,7 +335,8 @@
 				;
 		});
 
-		$(_this).find('li.fb-reply-action-container textarea').on('keypress', function(e) {
+		$(_this).find('li.fb-reply-action-container textarea')
+		.on('keypress', function(e) {
 			if (e.which == 13) {
 				//Enter keycode
 				e.preventDefault();
@@ -360,6 +361,7 @@
 
 						textareaDOM.val('');
 						textareaDOM.removeAttr('disabled');
+						delayedResize.apply(textareaDOM);
 
 						var lastNestedComment = textareaDOM.closest('.replies').find('>.nestedComment').last();
 						if (lastNestedComment.length) {
@@ -371,8 +373,29 @@
 					}
 				});
 			}
-		});
+		})
+		.on('change', resize)
+		.on('cut', delayedResize)
+		.on('paste', delayedResize)
+		.on('drop', delayedResize)
+		.on('keydown', delayedResize)
+		;
 	}
+
+	function resize () {
+		$(this).css({
+			height: 'auto'
+		});
+
+		$(this).css({
+			height: $(this)[0].scrollHeight+'px'
+		});
+    }
+
+	/* 0-timeout to get the already changed text */
+    function delayedResize () {
+        window.setTimeout(resize.bind(this), 0);
+    }
 
 	function getAccessTokenForUser() {
 		var authResponse = FB.getAuthResponse();
